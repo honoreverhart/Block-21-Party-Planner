@@ -27,44 +27,96 @@ async function getList() {
     console.error("Error fetching events:", error);
   }
 }
-async function addEvent(events) {
+
+async function addEvent(event) {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(events),
+      body: JSON.stringify(event),
     });
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(
-        "Unable to add event due to Http error: " + response.status
-      )
+    if (!response.ok) {
+      throw new Error(`Failed to add event: ${response.status}`);
     }
+    const newEvent = await response.json();
+    state.events.push(newEvent); // Update the state of the new event
+    renderEvents(); // Rerender the events
+  } catch (error) {
+    console.error("Error adding event:", error);
+  }
+}
+
+async function deleteEvent(event) {
+  try {
+    const response = await fetch(API_URL + "/" + event.id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(
+        "Unable to delete artist due to Http error: " + response.status
+      );
+    }
+    render();
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-function renderEvents() {}
+function renderEvents(event) {
+  //Button to Delete the Artist
+  const deleteButton = document.createElement("button");
+  deleteButton.textContent = "Delete";
+  deleteButton.style.display = "block";
+  deleteButton.addEventListener("click", async () => {
+    await deleteArtist(event);
+  });
+
+  const ul = document.getElementById("event");
+  state.events.forEach((event) => {
+    const li = document.createElement("li");
+    li.textContent = event.name;
+    ul.appendChild(li);
+  });
+}
+
 async function render(event) {
   await getList();
-  renderEvents();
-  const form = document.getElementById("addEvent");
-  const button = document.getElementById("add-event");
-  button.addEventListener("submit", (event) => {
-    event.preventDefault();
-  });
-  const formData = new FormData(form);
-  const newEvent = {
-    id: formData.get("id"),
-    name: formData.get("eventName"),
-    description: formData.get("description"),
-    date: formData.get("date"),
-    location: formData.get("location"),
-  };
-  addEvent(newEvent);
+  renderEvents(event);
 }
 
 render();
+
+const form = document.getElementById("addEvent");
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const newEvent = {
+    name: form.eventName.value,
+    description: form.description.value,
+    date: form.date.value,
+    location: form.location.value,
+  };
+  await addEvent(newEvent);
+  render();
+});
+
+// addEvent({name: "Example Event",
+//   description: "example description",
+//   date: "2023-12-05T15:30:00Z",
+//   location: "Denver, CO"
+// })
+// const form = document.getElementById("add-event");
+// form.addEventListener("submit", async (event) => {
+//   event.preventDefault();
+//   console.log("submit");
+//   const newEvent = {
+//     name: form.eventName.value,
+//     description: form.description.value,
+//     date: form.date.value,
+//     location: form.location.value
+//   };
