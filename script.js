@@ -48,9 +48,9 @@ async function addEvent(event) {
   }
 }
 
-async function deleteEvent(event) {
+async function deleteEvent(eventID) {
   try {
-    const response = await fetch(API_URL + "/" + event.id, {
+    const response = await fetch(API_URL + "/" + eventID, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -67,26 +67,34 @@ async function deleteEvent(event) {
   }
 }
 
-function renderEvents(event) {
+function renderEvents() {
   //Button to Delete the Artist
-  const deleteButton = document.createElement("button");
-  deleteButton.textContent = "Delete";
-  deleteButton.style.display = "block";
-  deleteButton.addEventListener("click", async () => {
-    await deleteArtist(event);
-  });
 
   const ul = document.getElementById("event");
+  ul.innerHTML = "";
   state.events.forEach((event) => {
-    const li = document.createElement("li");
-    li.textContent = event.name;
-    ul.appendChild(li);
+    const eventCard = document.createElement("section");
+    eventCard.innerHTML = `
+      <div>
+        <h3>${event.name}</h3>
+        <p>${event.description}</p>
+        <p>${event.date}</p>
+        <p>${event.location}</p>
+      </div>`; //event.date not printing correctly
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.style.display = "block";
+    deleteButton.addEventListener("click", async () => {
+      await deleteEvent(event.id);
+    });
+    eventCard.append(deleteButton);
+    ul.appendChild(eventCard);
   });
 }
 
-async function render(event) {
+async function render() {
   await getList();
-  renderEvents(event);
+  renderEvents();
 }
 
 render();
@@ -94,29 +102,15 @@ render();
 const form = document.getElementById("addEvent");
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const dateVal = form.date.value;
+  const isoDate = new Date(dateVal).toISOString();
 
   const newEvent = {
     name: form.eventName.value,
     description: form.description.value,
-    date: form.date.value,
+    date: isoDate,
     location: form.location.value,
   };
   await addEvent(newEvent);
   render();
 });
-
-// addEvent({name: "Example Event",
-//   description: "example description",
-//   date: "2023-12-05T15:30:00Z",
-//   location: "Denver, CO"
-// })
-// const form = document.getElementById("add-event");
-// form.addEventListener("submit", async (event) => {
-//   event.preventDefault();
-//   console.log("submit");
-//   const newEvent = {
-//     name: form.eventName.value,
-//     description: form.description.value,
-//     date: form.date.value,
-//     location: form.location.value
-//   };
